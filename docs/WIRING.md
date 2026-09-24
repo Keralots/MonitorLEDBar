@@ -17,6 +17,10 @@
 
 ## Diagram
 
+![Wiring diagram](wiring.svg)
+
+PNG version: [wiring.png](wiring.png). Text version below.
+
 Power:
 
 ```
