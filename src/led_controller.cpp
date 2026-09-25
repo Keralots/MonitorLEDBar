@@ -5,6 +5,8 @@
 void LedController::begin(bool on, uint16_t level) {
   on_ = on;
   level_ = (level >= 1 && level <= LEVEL_MAX) ? level : DEFAULT_LEVEL;
+  if (on_ && fixedOnLevel_) level_ = fixedOnLevel_;
+  level_ = clampLevel(level_);
 
   ledcSetup(PWM_CHANNEL, PWM_FREQ_HZ, PWM_BITS);
   ledcAttachPin(PIN_LED_PWM, PWM_CHANNEL);
@@ -14,15 +16,31 @@ void LedController::begin(bool on, uint16_t level) {
   lastUpdate_ = millis();
 }
 
+void LedController::configure(uint16_t minLevel, uint16_t maxLevel, uint16_t fixedOnLevel, uint32_t rampMs) {
+  minLevel_ = constrain(minLevel, 1, LEVEL_MAX);
+  maxLevel_ = constrain(maxLevel, minLevel_, LEVEL_MAX);
+  fixedOnLevel_ = fixedOnLevel ? constrain(fixedOnLevel, minLevel_, maxLevel_) : 0;
+  rampMs_ = rampMs;
+  float clamped = clampLevel(level_);
+  if (clamped != level_) {
+    level_ = clamped;
+    notify();
+  }
+}
+
+float LedController::clampLevel(float level) const {
+  return constrain(level, (float)minLevel_, (float)maxLevel_);
+}
+
 void LedController::update(uint32_t now) {
   float dt = (float)(now - lastUpdate_);
   lastUpdate_ = now;
 
   if (rampDir_ != 0) {
-    level_ += rampDir_ * dt * LEVEL_MAX / RAMP_FULL_MS;
-    if (level_ > LEVEL_MAX) level_ = LEVEL_MAX;
-    if (level_ <= 0) {
-      // Dimmed to zero: turn off, keep the pre-hold level for the next turnOn().
+    level_ += rampDir_ * dt * LEVEL_MAX / rampMs_;
+    if (level_ > maxLevel_) level_ = maxLevel_;
+    if (level_ < minLevel_) {
+      // Dimmed past the minimum: turn off, keep the pre-hold level for the next turnOn().
       level_ = rampStartLevel_;
       on_ = false;
       rampDir_ = 0;
@@ -40,7 +58,7 @@ void LedController::update(uint32_t now) {
 void LedController::turnOn() {
   if (on_) return;
   on_ = true;
-  if (level_ < 1) level_ = DEFAULT_LEVEL;
+  level_ = clampLevel(fixedOnLevel_ ? fixedOnLevel_ : level_);
   notify();
 }
 
@@ -55,15 +73,41 @@ void LedController::startRamp(int8_t dir) {
   if (dir < 0 && !on_) return;
   if (dir > 0 && !on_) {
     on_ = true;
-    level_ = 0;
+    level_ = minLevel_;
   }
-  rampStartLevel_ = level_ >= 1 ? level_ : DEFAULT_LEVEL;
+  rampStartLevel_ = level_;
   rampDir_ = dir;
 }
 
 void LedController::stopRamp(int8_t dir) {
   if (rampDir_ != dir) return;
   rampDir_ = 0;
+  notify();
+}
+
+void LedController::step(int8_t dir, uint16_t amount) {
+  if (!on_) {
+    if (dir > 0) turnOn();
+    return;
+  }
+  float next = level_ + dir * (float)amount;
+  // Stepping below the minimum turns off and keeps the current level for turnOn().
+  if (next < minLevel_) {
+    turnOff();
+    return;
+  }
+  level_ = clampLevel(next);
+  notify();
+}
+
+void LedController::setLevel(uint16_t level) {
+  if (level == 0) {
+    turnOff();
+    return;
+  }
+  rampDir_ = 0;
+  on_ = true;
+  level_ = clampLevel(level);
   notify();
 }
 

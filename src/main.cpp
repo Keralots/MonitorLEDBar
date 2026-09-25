@@ -1,35 +1,47 @@
 #include <Arduino.h>
-#include <Preferences.h>
+#include "app.h"
 #include "config.h"
-#include "led_controller.h"
+#include "network.h"
+#include "settings.h"
 #include "touch_button.h"
+#include "web.h"
 
 enum class Role : uint8_t { Down, Up };
 
-// Pad-to-role mapping; the web UI will make this swappable.
 struct Pad {
   TouchButton button;
-  Role role;
+  bool isPadA;
+  Role heldRole;  // latched at HoldStart so a mid-hold swap cannot orphan the ramp
 };
 
 static Pad pads[] = {
-  {TouchButton(PIN_TOUCH_A), Role::Down},
-  {TouchButton(PIN_TOUCH_B), Role::Up},
+  {TouchButton(PIN_TOUCH_A), true, Role::Down},
+  {TouchButton(PIN_TOUCH_B), false, Role::Up},
 };
 
-static LedController led;
-static Preferences prefs;
+LedController led;
 
 static bool savePending = false;
 static uint32_t changedAt = 0;
-static bool savedOn = false;
-static uint16_t savedLevel = 0;
 
-static void handleEvent(Role role, TouchEvent ev) {
+void applySettings() {
+  uint16_t fixed = settings.onLevelMode == OnLevelMode::Fixed ? settings.fixedOnPct * 10 : 0;
+  led.configure(settings.minPct * 10, settings.maxPct * 10, fixed, settings.rampMs);
+}
+
+static Role roleOf(bool isPadA) {
+  // Pad A dims by default; swapPads flips both pads.
+  return (isPadA != settings.swapPads) ? Role::Down : Role::Up;
+}
+
+static void handleEvent(Pad &pad, TouchEvent ev) {
+  if (ev == TouchEvent::HoldStart) pad.heldRole = roleOf(pad.isPadA);
+  Role role = ev == TouchEvent::HoldEnd ? pad.heldRole : roleOf(pad.isPadA);
   int8_t dir = role == Role::Up ? 1 : -1;
   switch (ev) {
     case TouchEvent::Tap:
-      if (role == Role::Up) led.turnOn();
+      if (settings.tapMode == TapMode::Step) led.step(dir, settings.stepPct * 10);
+      else if (role == Role::Up) led.turnOn();
       else led.turnOff();
       break;
     case TouchEvent::HoldStart:
@@ -43,45 +55,44 @@ static void handleEvent(Role role, TouchEvent ev) {
   }
 }
 
-static void saveIfDue(uint32_t now) {
+static void saveStateIfDue(uint32_t now) {
   if (!savePending || now - changedAt < SAVE_DELAY_MS) return;
   savePending = false;
-  if (led.isOn() != savedOn) {
-    savedOn = led.isOn();
-    prefs.putBool("on", savedOn);
-  }
-  if (led.level() != savedLevel) {
-    savedLevel = led.level();
-    prefs.putUShort("level", savedLevel);
-  }
+  stateSave(led.isOn(), led.level());
 }
 
 void setup() {
   Serial.begin(115200);
 
-  prefs.begin("ledbar", false);
-  savedOn = prefs.getBool("on", true);
-  savedLevel = prefs.getUShort("level", DEFAULT_LEVEL);
+  settingsLoad();
+  bool on;
+  uint16_t level;
+  stateLoad(on, level);
 
   for (auto &p : pads) p.button.begin();
 
-  led.begin(savedOn, savedLevel);
+  applySettings();
+  led.begin(on, level);
   led.setChangeListener([] {
     savePending = true;
     changedAt = millis();
     Serial.printf("on=%d level=%u\n", led.isOn(), led.level());
   });
 
-  Serial.printf("MonitorLEDBar start: on=%d level=%u\n", savedOn, savedLevel);
+  Serial.printf("MonitorLEDBar v%s start: on=%d level=%u name=%s\n", FW_VERSION, on, level, settings.deviceName);
+  networkBegin();
 }
 
 void loop() {
   uint32_t now = millis();
   for (auto &p : pads) {
     TouchEvent ev = p.button.update(now);
-    if (ev != TouchEvent::None) handleEvent(p.role, ev);
+    if (ev != TouchEvent::None) handleEvent(p, ev);
   }
+
   led.update(now);
-  saveIfDue(now);
-  delay(5);
+  saveStateIfDue(now);
+  networkLoop(now);
+  webLoop();
+  delay(2);
 }

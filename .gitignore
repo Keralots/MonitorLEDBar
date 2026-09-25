@@ -5,3 +5,4 @@
 .vscode/ipch
 CLAUDE.md
 .claude/
+src/web_pages.h

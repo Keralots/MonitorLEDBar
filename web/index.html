@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en" data-accent="green" data-mode="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LED Bar</title>
+<meta name="theme-color" content="#f4f0e7">
+<script>(function(){try{var a=localStorage.getItem('ledbar_accent');if(a)document.documentElement.setAttribute('data-accent',a);var m=localStorage.getItem('ledbar_mode');if(m){document.documentElement.setAttribute('data-mode',m);var mt=document.querySelector('meta[name=theme-color]');if(mt)mt.setAttribute('content',m==='dark'?'#161512':'#f4f0e7');}}catch(e){}})();</script>
+<link rel="stylesheet" href="/portal.css?v=%VER%">
+</head>
+<body>
+<div class="app">
+
+<header class="topbar">
+  <button type="button" class="hamburger" id="navToggle" aria-label="Toggle navigation" aria-expanded="false"><span></span></button>
+  <div class="tb-brand">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <span class="tb-name">LED Bar</span>
+    <span class="tb-ver">v%VER%</span>
+  </div>
+  <span class="tb-sep" aria-hidden="true"></span>
+  <span class="tb-crumb" id="crumb">Light</span>
+  <div class="tb-right">
+    <div class="acc-pick" role="group" aria-label="Accent colour">
+      <span class="lab">Accent</span>
+      <button type="button" class="acc-sw on" data-acc="green" title="Green" aria-label="Green accent"><i></i></button>
+      <button type="button" class="acc-sw" data-acc="amber" title="Amber" aria-label="Amber accent"><i></i></button>
+    </div>
+    <div class="mode-toggle" role="group" aria-label="Colour mode">
+      <button type="button" data-mode="light" class="on"><span class="ic"></span>Light</button>
+      <button type="button" data-mode="dark"><span class="ic"></span>Dark</button>
+    </div>
+  </div>
+</header>
+
+<div class="workspace">
+
+  <div class="nav-scrim" id="navScrim" aria-hidden="true"></div>
+  <aside class="sidebar">
+    <nav aria-label="Sections">
+      <div class="nav-group">
+        <div class="nav-label">Control</div>
+        <button type="button" class="nav-item active" data-nav="light">Light</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">Configuration</div>
+        <button type="button" class="nav-item" data-nav="touch">Touch pads</button>
+        <button type="button" class="nav-item" data-nav="brightness">Brightness</button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-label">System</div>
+        <button type="button" class="nav-item" data-nav="network">Network</button>
+        <button type="button" class="nav-item" data-nav="firmware">Maintenance</button>
+      </div>
+    </nav>
+
+    <div class="sidebar-spacer"></div>
+
+    <div class="status-block">
+      <div class="rail-label">Device status</div>
+      <div class="status-readout" id="statusReadout">
+        <div class="sr-head">
+          <span class="sr-led online" id="srLed"></span>
+          <span class="sr-title" id="srTitle">connecting...</span>
+        </div>
+        <dl class="sr-rows">
+          <div class="sr-row"><dt>ip</dt><dd id="srIp">--</dd></div>
+          <div class="sr-row"><dt>host</dt><dd><span id="srHost">--</span>.local</dd></div>
+          <div class="sr-row"><dt>uptime</dt><dd id="srUptime">--</dd></div>
+          <div class="sr-row"><dt>rssi</dt><dd id="srRssi">--</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="about">
+      <span class="line">MonitorLEDBar &middot; <b>v%VER%</b></span>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="content-inner">
+
+      <!-- LIGHT (live control, not part of the settings form) -->
+      <section class="page active" data-page="light">
+        <div class="page-header">
+          <h1 class="page-h1">Light</h1>
+          <p class="page-lede">Changes apply immediately, just like the touch pads.</p>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Power <span class="tag" id="lightTag">--</span></h2>
+          <div class="page-actions" style="margin-top:0">
+            <button type="button" class="btn btn-accent btn-lg" id="lightOn"><span class="gl"></span> Turn on</button>
+            <button type="button" class="btn btn-lg" id="lightOff">Turn off</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Brightness</h2>
+          <div class="field" style="margin-bottom:0">
+            <label class="field-label" for="liveLevel">Level</label>
+            <div class="range-row">
+              <input type="range" id="liveLevel" min="1" max="100" step="1" value="50" data-suffix="%">
+              <span class="range-val" data-for="liveLevel">50%</span>
+            </div>
+            <p class="field-hint">Perceptual scale. Limited by the minimum and maximum set on the Brightness page.</p>
+          </div>
+        </div>
+      </section>
+
+      <form id="cfgForm" action="/save" method="POST">
+
+        <!-- TOUCH -->
+        <section class="page" data-page="touch">
+          <div class="page-header">
+            <h1 class="page-h1">Touch pads</h1>
+            <p class="page-lede">What the two touch pads on the bar do.</p>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">Pad roles</h2>
+            <label class="check-row standalone">
+              <input type="checkbox" name="swapPads" id="swapPads">
+              <span class="check-box" aria-hidden="true"></span>
+              <span class="check-text"><strong>Swap pads</strong><span class="ct-hint">By default pad A (GPIO0) dims and pad B (GPIO1) brightens. Tick to reverse.</span></span>
+            </label>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">Short tap</h2>
+            <div class="field">
+              <label class="field-label" for="tapMode">Tap action</label>
+              <div class="select-wrap">
+                <select name="tapMode" id="tapMode">
+                  <option value="0">On / off &middot; dim pad turns off, bright pad turns on</option>
+                  <option value="1">Step &middot; change brightness by a fixed amount</option>
+                </select>
+              </div>
+            </div>
+            <div class="subcard" id="stepFields">
+              <div class="field" style="margin-bottom:0">
+                <label class="field-label" for="stepPct">Step size</label>
+                <div class="range-row">
+                  <input type="range" name="stepPct" id="stepPct" min="1" max="50" step="1" value="10" data-suffix="%">
+                  <span class="range-val" data-for="stepPct">10%</span>
+                </div>
+                <p class="field-hint">A dim tap below the minimum turns the light off. A bright tap while off turns it on.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">Touch and hold</h2>
+            <div class="field" style="margin-bottom:0">
+              <label class="field-label" for="rampMs">Full ramp time</label>
+              <div class="range-row">
+                <input type="range" name="rampMs" id="rampMs" min="1000" max="10000" step="500" value="3000" data-div="1000" data-fixed="1" data-suffix=" s">
+                <span class="range-val" data-for="rampMs">3.0 s</span>
+              </div>
+              <p class="field-hint">Time to go from minimum to maximum while holding a pad. Holding dim past the minimum turns the light off.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- BRIGHTNESS -->
+        <section class="page" data-page="brightness">
+          <div class="page-header">
+            <h1 class="page-h1">Brightness</h1>
+            <p class="page-lede">Limits for every control, and the level used when the light turns on.</p>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">Limits</h2>
+            <div class="field">
+              <label class="field-label" for="minPct">Minimum</label>
+              <div class="range-row">
+                <input type="range" name="minPct" id="minPct" min="1" max="100" step="1" value="1" data-suffix="%">
+                <span class="range-val" data-for="minPct">1%</span>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label" for="maxPct">Maximum</label>
+              <div class="range-row">
+                <input type="range" name="maxPct" id="maxPct" min="1" max="100" step="1" value="100" data-suffix="%">
+                <span class="range-val" data-for="maxPct">100%</span>
+              </div>
+              <p class="field-hint">Lower the maximum to reduce heat or glare. Minimum is always kept at or below maximum.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">When turned on</h2>
+            <div class="field">
+              <label class="field-label" for="onLevelMode">Brightness after turning on</label>
+              <div class="select-wrap">
+                <select name="onLevelMode" id="onLevelMode">
+                  <option value="0">Last used level</option>
+                  <option value="1">Fixed level</option>
+                </select>
+              </div>
+              <p class="field-hint">Applies to tap-on, the web Turn on button and power-up after a power cut.</p>
+            </div>
+            <div class="subcard" id="fixedFields">
+              <div class="field" style="margin-bottom:0">
+                <label class="field-label" for="fixedOnPct">Fixed level</label>
+                <div class="range-row">
+                  <input type="range" name="fixedOnPct" id="fixedOnPct" min="1" max="100" step="1" value="50" data-suffix="%">
+                  <span class="range-val" data-for="fixedOnPct">50%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- NETWORK -->
+        <section class="page" data-page="network">
+          <div class="page-header">
+            <h1 class="page-h1">Network</h1>
+            <p class="page-lede">Device name and mDNS hostname.</p>
+          </div>
+          <div class="card">
+            <h2 class="card-title">Identity</h2>
+            <div class="field" style="margin-bottom:0">
+              <label class="field-label" for="deviceName">Device name</label>
+              <input type="text" name="deviceName" id="deviceName" maxlength="31" pattern="^[a-zA-Z]([a-zA-Z0-9-]*[a-zA-Z0-9])?$">
+              <p class="field-hint">Reachable at <code><span id="hostPreview">--</span>.local</code>. Letters, numbers and hyphens only. Useful to tell several bars apart.</p>
+            </div>
+          </div>
+          <div class="card">
+            <h2 class="card-title">WiFi</h2>
+            <p class="field-hint" style="margin:0 0 14px">Connected to <code id="wifiSsid">--</code>. Forget WiFi erases only the network credentials and restarts into the <code>LEDBar-XXXX</code> setup access point. Light settings are kept.</p>
+            <div class="page-actions" style="margin-top:0">
+              <button type="button" class="btn btn-danger" id="wifiResetBtn">Forget WiFi</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- MAINTENANCE -->
+        <section class="page" data-page="firmware">
+          <div class="page-header">
+            <h1 class="page-h1">Maintenance</h1>
+            <p class="page-lede">Update firmware over the air, restart or reset the device.</p>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">Update over the air</h2>
+            <div class="crt oled-preview" style="max-width:360px">
+              <div class="oled-pv-head"><span class="ttl">installed</span><span class="meta">ESP32-C3</span></div>
+              <dl class="sr-rows" style="position:relative;z-index:1">
+                <div class="sr-row"><dt>version</dt><dd>v%VER%</dd></div>
+                <div class="sr-row"><dt>free heap</dt><dd id="fwHeap">--</dd></div>
+              </dl>
+            </div>
+            <div class="ota-drop" id="otaDrop">
+              <span class="px" style="clip-path:polygon(40% 0,60% 0,60% 45%,85% 45%,50% 85%,15% 45%,40% 45%)"></span>
+              <div class="big">Drop a <code>.bin</code> firmware here</div>
+              <div class="small">or <button type="button" class="browse" id="otaBrowse">browse for a file</button> - the device reboots automatically when done</div>
+              <input type="file" id="otaFile" accept=".bin" hidden>
+            </div>
+            <div class="ota-progress" id="otaProgress">
+              <div class="ota-bar"><i id="otaFill"></i></div>
+              <div class="ota-pct" id="otaPct">Uploading... 0%</div>
+            </div>
+            <div class="note warn">
+              <span class="note-k">care</span>
+              <div>Don't unplug or close this tab during an update. The touch pads keep working until the device reboots.</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">Restart</h2>
+            <div class="page-actions" style="margin-top:0">
+              <button type="button" class="btn" id="rebootBtn"><span class="gl"></span> Restart device</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">Factory reset</h2>
+            <div class="note warn">
+              <span class="note-k">danger</span>
+              <div>Erases <strong>all settings and WiFi credentials</strong> and restarts into setup access point mode. This cannot be undone.</div>
+            </div>
+            <div class="page-actions">
+              <button type="button" class="btn btn-danger" id="resetBtn">Factory reset</button>
+            </div>
+          </div>
+        </section>
+
+      </form>
+    </div>
+  </main>
+</div>
+</div>
+
+<div class="save-bar" id="saveBar">
+  <div class="save-bar-inner">
+    <div class="save-meta clean" id="saveMeta"><span class="dot"></span><span class="txt">All saved</span></div>
+    <button type="submit" form="cfgForm" class="btn btn-accent btn-lg" id="saveBtn">Save &amp; apply</button>
+  </div>
+</div>
+
+<script src="/portal.js?v=%VER%"></script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 #pragma once
 #include <Arduino.h>
 
+#define FW_VERSION "0.2.0"
+
 // ESP32-C3 SuperMini pins. Strapping pins 2, 8, 9 avoided.
 constexpr uint8_t PIN_TOUCH_A = 0;   // default role: dim / off
 constexpr uint8_t PIN_TOUCH_B = 1;   // default role: brighten / on
@@ -19,8 +21,20 @@ constexpr float GAMMA = 2.2f;
 constexpr uint32_t DEBOUNCE_MS = 20;
 constexpr uint32_t HOLD_THRESHOLD_MS = 400;
 
-constexpr uint32_t RAMP_FULL_MS = 3000;  // hold: 0 to 100 %
-constexpr uint32_t FADE_FULL_MS = 400;   // tap on/off fade
+constexpr uint32_t FADE_FULL_MS = 400;   // on/off fade
+
+// Web-configurable settings: defaults and limits.
+constexpr uint16_t DEF_RAMP_MS = 3000;   // hold: 0 to 100 %
+constexpr uint16_t MIN_RAMP_MS = 1000;
+constexpr uint16_t MAX_RAMP_MS = 10000;
+constexpr uint8_t DEF_STEP_PCT = 10;
+constexpr uint8_t DEF_MIN_PCT = 1;
+constexpr uint8_t DEF_MAX_PCT = 100;
+constexpr uint8_t DEF_FIXED_ON_PCT = 50;
+
+// WiFi: open the setup portal if saved credentials do not connect in time.
+constexpr uint32_t WIFI_FALLBACK_PORTAL_MS = 60000;
+constexpr uint16_t WIFI_PORTAL_TIMEOUT_S = 300;
 
 // Delay NVS writes until changes settle (flash wear).
 constexpr uint32_t SAVE_DELAY_MS = 2000;
