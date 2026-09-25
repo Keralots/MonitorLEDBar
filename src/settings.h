@@ -14,6 +14,11 @@ struct Settings {
   uint8_t maxPct;
   OnLevelMode onLevelMode;
   uint8_t fixedOnPct;
+  bool mqttEnabled;
+  char mqttHost[64];
+  uint16_t mqttPort;
+  char mqttUser[64];
+  char mqttPass[64];
 };
 
 extern Settings settings;

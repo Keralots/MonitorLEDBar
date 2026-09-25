@@ -21,6 +21,11 @@ void settingsDefaults(Settings &s) {
   s.maxPct = DEF_MAX_PCT;
   s.onLevelMode = OnLevelMode::Last;
   s.fixedOnPct = DEF_FIXED_ON_PCT;
+  s.mqttEnabled = false;
+  s.mqttHost[0] = '\0';
+  s.mqttPort = DEF_MQTT_PORT;
+  s.mqttUser[0] = '\0';
+  s.mqttPass[0] = '\0';
 }
 
 bool isValidHostname(const char *name) {
@@ -41,6 +46,8 @@ void settingsClamp(Settings &s) {
   s.fixedOnPct = constrain(s.fixedOnPct, s.minPct, s.maxPct);
   if ((uint8_t)s.tapMode > 1) s.tapMode = TapMode::OnOff;
   if ((uint8_t)s.onLevelMode > 1) s.onLevelMode = OnLevelMode::Last;
+  if (s.mqttPort == 0) s.mqttPort = DEF_MQTT_PORT;
+  if (s.mqttHost[0] == '\0') s.mqttEnabled = false;
   if (!isValidHostname(s.deviceName)) {
     Settings d;
     settingsDefaults(d);
@@ -61,6 +68,11 @@ void settingsLoad() {
   settings.maxPct = prefs.getUChar("max", settings.maxPct);
   settings.onLevelMode = (OnLevelMode)prefs.getUChar("onMode", (uint8_t)settings.onLevelMode);
   settings.fixedOnPct = prefs.getUChar("onPct", settings.fixedOnPct);
+  settings.mqttEnabled = prefs.getBool("mqttOn", settings.mqttEnabled);
+  prefs.getString("mqttHost", settings.mqttHost, sizeof(settings.mqttHost));
+  settings.mqttPort = prefs.getUShort("mqttPort", settings.mqttPort);
+  prefs.getString("mqttUser", settings.mqttUser, sizeof(settings.mqttUser));
+  prefs.getString("mqttPass", settings.mqttPass, sizeof(settings.mqttPass));
   prefs.end();
   settingsClamp(settings);
 }
@@ -76,6 +88,11 @@ void settingsSave() {
   prefs.putUChar("max", settings.maxPct);
   prefs.putUChar("onMode", (uint8_t)settings.onLevelMode);
   prefs.putUChar("onPct", settings.fixedOnPct);
+  prefs.putBool("mqttOn", settings.mqttEnabled);
+  prefs.putString("mqttHost", settings.mqttHost);
+  prefs.putUShort("mqttPort", settings.mqttPort);
+  prefs.putString("mqttUser", settings.mqttUser);
+  prefs.putString("mqttPass", settings.mqttPass);
   prefs.end();
 }
 

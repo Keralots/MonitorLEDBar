@@ -46,6 +46,7 @@
         <div class="nav-label">Configuration</div>
         <button type="button" class="nav-item" data-nav="touch">Touch pads</button>
         <button type="button" class="nav-item" data-nav="brightness">Brightness</button>
+        <button type="button" class="nav-item" data-nav="ha">Home Assistant</button>
       </div>
       <div class="nav-group">
         <div class="nav-label">System</div>
@@ -207,6 +208,38 @@
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        <!-- HOME ASSISTANT -->
+        <section class="page" data-page="ha">
+          <div class="page-header">
+            <h1 class="page-h1">Home Assistant</h1>
+            <p class="page-lede">Connect to your MQTT broker. The bar then appears in Home Assistant automatically as a dimmable light.</p>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">MQTT <span class="tag" id="mqttState">--</span></h2>
+            <label class="check-row standalone">
+              <input type="checkbox" name="mqttEnabled" id="mqttEnabled">
+              <span class="check-box" aria-hidden="true"></span>
+              <span class="check-text"><strong>Enable Home Assistant integration</strong><span class="ct-hint">Uses MQTT discovery. Turning it off removes the device from Home Assistant.</span></span>
+            </label>
+            <div class="subcard" id="mqttFields">
+              <div class="grid-2">
+                <div class="field" style="margin-bottom:0"><label class="field-label" for="mqttHost">Broker host</label><input type="text" name="mqttHost" id="mqttHost" maxlength="63" placeholder="192.168.1.10"></div>
+                <div class="field" style="margin-bottom:0"><label class="field-label" for="mqttPort">Port</label><input type="number" name="mqttPort" id="mqttPort" min="1" max="65535" step="1" value="1883"></div>
+                <div class="field" style="margin-bottom:0"><label class="field-label" for="mqttUser">Username</label><input type="text" name="mqttUser" id="mqttUser" maxlength="63" autocomplete="off"></div>
+                <div class="field" style="margin-bottom:0"><label class="field-label" for="mqttPass">Password</label><input type="password" name="mqttPass" id="mqttPass" maxlength="63" autocomplete="new-password"></div>
+              </div>
+              <div class="note plain" id="mqttResult" style="display:none"><span class="note-k" id="mqttResultK">mqtt</span><div id="mqttResultText"></div></div>
+              <p class="field-hint">With the Mosquitto broker add-on, the host is usually the IP address of your Home Assistant. use a Home Assistant user (or a dedicated login) here. Leave the password empty to keep the saved one. Clearing the username also clears the password.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="card-title">In Home Assistant</h2>
+            <p class="field-hint" style="margin:0">The device shows up under <strong>Settings &rarr; Devices &amp; services &rarr; MQTT</strong> with the name set on the Network page. It has a light entity (on/off and brightness) plus WiFi signal and IP address diagnostics. When the bar goes offline Home Assistant marks it unavailable.</p>
           </div>
         </section>
 

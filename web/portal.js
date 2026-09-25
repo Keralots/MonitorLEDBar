@@ -70,9 +70,12 @@ function toggle(el, on) { if (el) el.style.display = on ? '' : 'none'; }
 function syncPanels() {
   toggle($('#stepFields'), $('#tapMode').value === '1');
   toggle($('#fixedFields'), $('#onLevelMode').value === '1');
+  toggle($('#mqttFields'), $('#mqttEnabled').checked);
+  $('#mqttHost').required = $('#mqttEnabled').checked;
 }
 $('#tapMode').addEventListener('change', syncPanels);
 $('#onLevelMode').addEventListener('change', syncPanels);
+$('#mqttEnabled').addEventListener('change', syncPanels);
 var minR = $('#minPct'), maxR = $('#maxPct');
 minR.addEventListener('input', function () { if (+minR.value > +maxR.value) { maxR.value = minR.value; fmtRange(maxR); } });
 maxR.addEventListener('input', function () { if (+maxR.value < +minR.value) { minR.value = maxR.value; fmtRange(minR); } });
@@ -96,6 +99,9 @@ function loadConfig() {
       if (el.type === 'range') fmtRange(el);
     });
     $('#hostPreview').textContent = c.deviceName;
+    var mp = $('#mqttPass');
+    mp.value = '';
+    mp.placeholder = c.mqttPassSet ? 'saved - leave empty to keep' : '';
     syncPanels();
     markClean();
   });
@@ -115,7 +121,7 @@ form.addEventListener('submit', function (e) {
   btn.disabled = true; btn.textContent = 'Saving...';
   post('/save', formBody()).then(function (d) {
     btn.disabled = false; btn.textContent = orig;
-    if (d.success) { markClean('Saved'); loadConfig(); refreshLight(); }
+    if (d.success) { markClean('Saved'); loadConfig(); refreshLight(); if ($('#mqttEnabled').checked) setTimeout(watchMqtt, 500); }
     else alert('Error saving settings: ' + (d.message || 'unknown error'));
   }).catch(function (err) { btn.disabled = false; btn.textContent = orig; alert('Error saving settings: ' + err); });
 });
@@ -180,6 +186,27 @@ function doUpload(file) {
   xhr.open('POST', '/update'); xhr.send(fd);
 }
 
+// MQTT connection feedback
+function renderMqtt(d) {
+  $('#mqttState').textContent = d.mqtt || '--';
+  var box = $('#mqttResult'), k = $('#mqttResultK'), txt = $('#mqttResultText');
+  box.classList.remove('warn', 'plain');
+  if (d.mqtt === 'disabled') { box.style.display = 'none'; return false; }
+  box.style.display = '';
+  if (d.mqtt === 'connected') { k.textContent = 'ok'; txt.textContent = 'Connected to the broker. The bar is published to Home Assistant.'; return true; }
+  if (d.mqttError) { box.classList.add('warn'); k.textContent = 'error'; txt.textContent = d.mqttError + ' Retrying automatically.'; return true; }
+  box.classList.add('plain'); k.textContent = 'wait'; txt.textContent = 'Connecting to the broker...'; return false;
+}
+// After a save, poll quickly until the first connection attempt has a result.
+function watchMqtt() {
+  var tries = 0;
+  (function tick() {
+    fetch('/api/info').then(function (r) { return r.json(); }).then(function (d) {
+      if (!renderMqtt(d) && ++tries < 20) setTimeout(tick, 1000);
+    }).catch(function () { if (++tries < 20) setTimeout(tick, 1000); });
+  })();
+}
+
 // Status rail
 function fmtUptime(sec) {
   var d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
@@ -196,6 +223,7 @@ function refreshStatus() {
     $('#srRssi').textContent = d.rssi + ' dBm';
     $('#wifiSsid').textContent = d.ssid || '--';
     $('#fwHeap').textContent = (d.freeHeap / 1024).toFixed(1) + ' KB';
+    renderMqtt(d);
   }).catch(function () {
     if (led) { led.classList.remove('online'); led.classList.add('offline'); }
     $('#srTitle').textContent = 'offline';

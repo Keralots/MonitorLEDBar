@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "app.h"
 #include "config.h"
+#include "mqtt_ha.h"
 #include "network.h"
 #include "settings.h"
 #include "touch_button.h"
@@ -81,6 +82,7 @@ void setup() {
 
   Serial.printf("MonitorLEDBar v%s start: on=%d level=%u name=%s\n", FW_VERSION, on, level, settings.deviceName);
   networkBegin();
+  mqttBegin();
 }
 
 void loop() {
@@ -92,6 +94,7 @@ void loop() {
 
   led.update(now);
   saveStateIfDue(now);
+  mqttLoop();
   networkLoop(now);
   webLoop();
   delay(2);

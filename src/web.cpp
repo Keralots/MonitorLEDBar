@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include "app.h"
 #include "config.h"
+#include "mqtt_ha.h"
 #include "network.h"
 #include "settings.h"
 #include "web_pages.h"
@@ -57,6 +58,11 @@ static void handleConfig() {
   doc["maxPct"] = settings.maxPct;
   doc["onLevelMode"] = (uint8_t)settings.onLevelMode;
   doc["fixedOnPct"] = settings.fixedOnPct;
+  doc["mqttEnabled"] = settings.mqttEnabled;
+  doc["mqttHost"] = settings.mqttHost;
+  doc["mqttPort"] = settings.mqttPort;
+  doc["mqttUser"] = settings.mqttUser;
+  doc["mqttPassSet"] = settings.mqttPass[0] != 0;  // the password itself never leaves the device
   sendJson(doc);
 }
 
@@ -82,12 +88,35 @@ static void handleSave() {
   if (server.hasArg("maxPct")) s.maxPct = argByte("maxPct");
   if (server.hasArg("onLevelMode")) s.onLevelMode = (OnLevelMode)argByte("onLevelMode");
   if (server.hasArg("fixedOnPct")) s.fixedOnPct = argByte("fixedOnPct");
+  if (server.hasArg("mqttEnabled")) s.mqttEnabled = server.arg("mqttEnabled") == "1";
+  if (server.hasArg("mqttHost")) {
+    String host = server.arg("mqttHost");
+    host.trim();
+    if (host.length() >= sizeof(s.mqttHost)) return sendError("MQTT host too long");
+    strlcpy(s.mqttHost, host.c_str(), sizeof(s.mqttHost));
+  }
+  if (server.hasArg("mqttPort")) s.mqttPort = constrain(server.arg("mqttPort").toInt(), 1, 65535);
+  if (server.hasArg("mqttUser")) {
+    if (server.arg("mqttUser").length() >= sizeof(s.mqttUser)) return sendError("MQTT user too long");
+    strlcpy(s.mqttUser, server.arg("mqttUser").c_str(), sizeof(s.mqttUser));
+  }
+  // Empty password field keeps the stored one; clearing the user clears both.
+  if (server.hasArg("mqttPass") && server.arg("mqttPass").length()) {
+    if (server.arg("mqttPass").length() >= sizeof(s.mqttPass)) return sendError("MQTT password too long");
+    strlcpy(s.mqttPass, server.arg("mqttPass").c_str(), sizeof(s.mqttPass));
+  }
+  if (s.mqttUser[0] == 0) s.mqttPass[0] = 0;
+  if (s.mqttEnabled && s.mqttHost[0] == 0) return sendError("MQTT host is required");
   settingsClamp(s);
 
   bool nameChanged = strcmp(s.deviceName, settings.deviceName) != 0;
+  bool mqttChanged = nameChanged || s.mqttEnabled != settings.mqttEnabled || s.mqttPort != settings.mqttPort ||
+                     strcmp(s.mqttHost, settings.mqttHost) || strcmp(s.mqttUser, settings.mqttUser) ||
+                     strcmp(s.mqttPass, settings.mqttPass);
   settings = s;
   settingsSave();
   applySettings();
+  if (mqttChanged) mqttConfigChanged();
   if (nameChanged) {
     WiFi.setHostname(settings.deviceName);
     networkRestartMdns();
@@ -122,6 +151,8 @@ static void handleInfo() {
   doc["rssi"] = WiFi.RSSI();
   doc["uptime"] = millis() / 1000;
   doc["freeHeap"] = ESP.getFreeHeap();
+  doc["mqtt"] = mqttStatus();
+  doc["mqttError"] = mqttError();
   sendJson(doc);
 }
 
@@ -141,6 +172,7 @@ static void handleWifiReset() {
 static void handleFactoryReset() {
   sendOk();
   delay(500);
+  mqttRemoveDevice();
   settingsFactoryReset();
   networkResetCredentials();
   ESP.restart();
