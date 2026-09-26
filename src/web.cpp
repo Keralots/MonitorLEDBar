@@ -3,6 +3,7 @@
 #include <Update.h>
 #include <WebServer.h>
 #include <WiFi.h>
+#include <esp_ota_ops.h>
 #include "app.h"
 #include "config.h"
 #include "mqtt_ha.h"
@@ -152,6 +153,10 @@ static void handleInfo() {
   doc["rssi"] = WiFi.RSSI();
   doc["uptime"] = millis() / 1000;
   doc["freeHeap"] = ESP.getFreeHeap();
+  // OTA cannot change the partition table, so show which layout this board has.
+  const esp_partition_t *next = esp_ota_get_next_update_partition(nullptr);
+  doc["otaSlot"] = next ? next->size : 0;
+  doc["sketchSize"] = ESP.getSketchSize();
   doc["mqtt"] = mqttStatus();
   doc["mqttError"] = mqttError();
   sendJson(doc);

@@ -262,6 +262,8 @@ function refreshStatus() {
     $('#wifiSsid').textContent = d.ssid || '--';
     $('#fwHeap').textContent = (d.freeHeap / 1024).toFixed(1) + ' KB';
     renderMqtt(d);
+    if (d.otaSlot) $('#fwSlot').textContent = Math.round(d.sketchSize / 1024) + ' / ' + Math.round(d.otaSlot / 1024) + ' KB' +
+      (d.otaSlot < 1900000 ? ' (old layout - flash once over USB)' : '');
   }).catch(function () {
     if (led) { led.classList.remove('online'); led.classList.add('offline'); }
     $('#srTitle').textContent = 'offline';

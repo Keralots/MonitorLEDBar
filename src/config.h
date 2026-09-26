@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 
-#define FW_VERSION "0.4.0"
+#define FW_VERSION "0.4.1"
 
 // ESP32-C3 SuperMini pins. Strapping pins 2, 8, 9 avoided.
 constexpr uint8_t PIN_TOUCH_A = 0;   // default role: dim / off

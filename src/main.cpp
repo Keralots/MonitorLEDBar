@@ -61,6 +61,8 @@ static void saveStateIfDue(uint32_t now) {
   if (!savePending || now - changedAt < SAVE_DELAY_MS) return;
   savePending = false;
   stateSave(led.isOn(), led.level());
+  // Logged once per settled change; ramps and group streams would flood the console.
+  Serial.printf("State: on=%d level=%u\n", led.isOn(), led.level());
 }
 
 void setup() {
@@ -78,7 +80,6 @@ void setup() {
   led.setChangeListener([] {
     savePending = true;
     changedAt = millis();
-    Serial.printf("on=%d level=%u\n", led.isOn(), led.level());
   });
 
   Serial.printf("MonitorLEDBar v%s start: on=%d level=%u name=%s\n", FW_VERSION, on, level, settings.deviceName);
