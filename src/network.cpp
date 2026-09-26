@@ -33,8 +33,15 @@ void networkBegin() {
   snprintf(apName, sizeof(apName), "LEDBar-%02X%02X", (uint8_t)(mac >> 32), (uint8_t)(mac >> 40));
   WiFi.setHostname(settings.deviceName);  // must precede the first mode() call to reach DHCP
   WiFi.mode(WIFI_STA);  // WiFi must be initialised before reading stored credentials
+  WiFi.setSleep(false);  // modem sleep drops ESP-NOW frames from paired bars
   wm.setDebugOutput(false);
   wm.setConnectTimeout(20);
+#ifdef PROVISION_SSID
+  // Bench provisioning of a blank board; flags come from PLATFORMIO_BUILD_FLAGS, never from files.
+#define PROV_STR2(x) #x
+#define PROV_STR(x) PROV_STR2(x)
+  if (!wm.getWiFiIsSaved()) WiFi.begin(PROV_STR(PROVISION_SSID), PROV_STR(PROVISION_PASS));
+#endif
   if (wm.getWiFiIsSaved()) startSta();
   else startPortal();
 }

@@ -111,6 +111,15 @@ void LedController::setLevel(uint16_t level) {
   notify();
 }
 
+void LedController::setState(bool on, uint16_t level) {
+  float next = level ? clampLevel(level) : level_;
+  if (on == on_ && next == level_ && rampDir_ == 0) return;
+  rampDir_ = 0;
+  on_ = on;
+  level_ = next;
+  notify();
+}
+
 void LedController::writeOutput(float level) {
   const uint32_t maxDuty = (1u << PWM_BITS) - 1;
   uint32_t duty = 0;

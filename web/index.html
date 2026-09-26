@@ -47,6 +47,7 @@
         <button type="button" class="nav-item" data-nav="touch">Touch pads</button>
         <button type="button" class="nav-item" data-nav="brightness">Brightness</button>
         <button type="button" class="nav-item" data-nav="ha">Home Assistant</button>
+        <button type="button" class="nav-item" data-nav="pairing">Pairing</button>
       </div>
       <div class="nav-group">
         <div class="nav-label">System</div>
@@ -104,6 +105,26 @@
             </div>
             <p class="field-hint">Perceptual scale. Limited by the minimum and maximum set on the Brightness page.</p>
           </div>
+        </div>
+      </section>
+
+      <!-- PAIRING (live, not part of the settings form) -->
+      <section class="page" data-page="pairing">
+        <div class="page-header">
+          <h1 class="page-h1">Pairing</h1>
+          <p class="page-lede">Paired bars share one state: touch, web or Home Assistant on any of them controls the whole group. Bars must be on the same WiFi network.</p>
+        </div>
+        <div class="card">
+          <h2 class="card-title">This group <span class="tag" id="grpTag">--</span></h2>
+          <div class="check-list" id="grpList"></div>
+          <div class="page-actions" id="grpActions" style="display:none">
+            <button type="button" class="btn btn-danger" id="grpLeave">Leave group</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Bars nearby</h2>
+          <div class="check-list" id="nearList"></div>
+          <p class="field-hint">Other bars running this firmware appear here within a few seconds. Pairing a bar that is already in another group moves it into this one. Each bar keeps its own brightness limits.</p>
         </div>
       </section>
 

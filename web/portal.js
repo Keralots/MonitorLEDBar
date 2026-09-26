@@ -28,7 +28,8 @@ function showPage(key) {
   var active = navItems.filter(function (n) { return n.dataset.nav === key; })[0];
   if (active && crumb) crumb.textContent = active.textContent.trim();
   // The Light page is live control; the save bar only belongs to settings pages.
-  if (saveBar) saveBar.style.display = key === 'light' ? 'none' : '';
+  if (saveBar) saveBar.style.display = (key === 'light' || key === 'pairing') ? 'none' : '';
+  if (key === 'pairing') refreshPair();
   window.scrollTo(0, 0);
   closeNav();
   try { localStorage.setItem('ledbar_section', key); } catch (e) {}
@@ -185,6 +186,43 @@ function doUpload(file) {
   var fd = new FormData(); fd.append('firmware', file);
   xhr.open('POST', '/update'); xhr.send(fd);
 }
+
+// Pairing
+function esc(x) { return String(x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function barRow(b, sub, btnClass, btnText, action) {
+  return '<div class="check-row" style="align-items:center"><span class="check-text" style="margin-right:auto"><strong>' + esc(b.name) +
+    '</strong><span class="ct-hint">' + sub + '</span></span>' +
+    (btnText ? '<button type="button" class="btn ' + btnClass + '" data-act="' + action + '" data-mac="' + esc(b.mac) + '">' + btnText + '</button>' : '') + '</div>';
+}
+function renderPair(d) {
+  $('#grpTag').textContent = d.grouped ? (d.members.length + 1) + ' bars' : 'not paired';
+  var html = barRow({ name: d.name, mac: d.self }, esc(d.self) + ' &middot; this bar', '', '', '');
+  d.members.forEach(function (m) { html += barRow(m, esc(m.mac) + ' &middot; ' + (m.online ? 'online' : 'offline'), 'btn-danger', 'Remove', 'remove'); });
+  $('#grpList').innerHTML = html;
+  $('#grpActions').style.display = d.grouped ? '' : 'none';
+  var near = d.nearby.map(function (n) { return barRow(n, esc(n.mac) + (n.grouped ? ' &middot; in another group' : ''), 'btn-accent', 'Pair', 'add'); }).join('');
+  $('#nearList').innerHTML = near || '<p class="field-hint" style="margin:0">' + (d.ready ? 'Searching for other bars...' : 'Pairing radio is not running.') + '</p>';
+}
+function refreshPair() {
+  return fetch('/api/pair').then(function (r) { return r.json(); }).then(renderPair).catch(function () {});
+}
+function pairAction(url, mac) {
+  post(url, mac ? { mac: mac } : {}).then(function (d) {
+    if (!d.success) alert(d.message || 'Pairing action failed');
+    setTimeout(refreshPair, 400);
+  }).catch(function (err) { alert('Pairing action failed: ' + err); });
+}
+$('#grpList').addEventListener('click', function (e) {
+  var b = e.target.closest('button[data-act="remove"]'); if (!b) return;
+  if (confirm('Remove this bar from the group?')) pairAction('/api/pair/remove', b.dataset.mac);
+});
+$('#nearList').addEventListener('click', function (e) {
+  var b = e.target.closest('button[data-act="add"]'); if (b) pairAction('/api/pair/add', b.dataset.mac);
+});
+$('#grpLeave').addEventListener('click', function () {
+  if (confirm('Leave the group? This bar will be controlled on its own again.')) pairAction('/api/pair/leave');
+});
+setInterval(function () { if ($('[data-page="pairing"]').classList.contains('active')) refreshPair(); }, 2000);
 
 // MQTT connection feedback
 function renderMqtt(d) {

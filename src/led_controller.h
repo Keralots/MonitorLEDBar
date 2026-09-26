@@ -19,6 +19,7 @@ public:
   void stopRamp(int8_t dir);
   void step(int8_t dir, uint16_t amount);
   void setLevel(uint16_t level);  // 0 turns off
+  void setState(bool on, uint16_t level);  // mirror a paired bar; level is kept while off
 
   bool isOn() const { return on_; }
   uint16_t level() const { return (uint16_t)lroundf(level_); }  // level restored by turnOn()

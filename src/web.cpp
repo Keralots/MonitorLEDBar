@@ -7,6 +7,7 @@
 #include "config.h"
 #include "mqtt_ha.h"
 #include "network.h"
+#include "pairing.h"
 #include "settings.h"
 #include "web_pages.h"
 
@@ -156,6 +157,35 @@ static void handleInfo() {
   sendJson(doc);
 }
 
+static void handlePairInfo() {
+  JsonDocument doc;
+  pairFillJson(doc);
+  sendJson(doc);
+}
+
+static bool macArg(uint8_t mac[6]) {
+  return server.hasArg("mac") && parseMac(server.arg("mac").c_str(), mac);
+}
+
+static void handlePairAdd() {
+  uint8_t mac[6];
+  if (!macArg(mac)) return sendError("Invalid MAC address");
+  if (!pairAdd(mac)) return sendError("Cannot pair this bar (already paired or group full)");
+  sendOk();
+}
+
+static void handlePairRemove() {
+  uint8_t mac[6];
+  if (!macArg(mac)) return sendError("Invalid MAC address");
+  if (!pairRemove(mac)) return sendError("Not a member of this group");
+  sendOk();
+}
+
+static void handlePairLeave() {
+  pairLeave();
+  sendOk();
+}
+
 static void handleReboot() {
   sendOk();
   delay(500);
@@ -173,6 +203,7 @@ static void handleFactoryReset() {
   sendOk();
   delay(500);
   mqttRemoveDevice();
+  pairLeave();
   settingsFactoryReset();
   networkResetCredentials();
   ESP.restart();
@@ -211,6 +242,10 @@ void webBegin() {
   server.on("/api/state", HTTP_GET, handleState);
   server.on("/api/light", HTTP_POST, handleLight);
   server.on("/api/info", HTTP_GET, handleInfo);
+  server.on("/api/pair", HTTP_GET, handlePairInfo);
+  server.on("/api/pair/add", HTTP_POST, handlePairAdd);
+  server.on("/api/pair/remove", HTTP_POST, handlePairRemove);
+  server.on("/api/pair/leave", HTTP_POST, handlePairLeave);
   server.on("/api/reboot", HTTP_POST, handleReboot);
   server.on("/api/wifireset", HTTP_POST, handleWifiReset);
   server.on("/api/reset", HTTP_POST, handleFactoryReset);
