@@ -7,7 +7,7 @@ class LedController {
 public:
   using ChangeListener = std::function<void()>;
 
-  void begin(bool on, uint16_t level);
+  void begin(uint8_t pwmPin, bool on, uint16_t level);
   void update(uint32_t now);
 
   // minLevel..maxLevel bound every on-level; fixedOnLevel 0 = restore last level.

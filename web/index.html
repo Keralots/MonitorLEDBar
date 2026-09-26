@@ -52,6 +52,7 @@
       <div class="nav-group">
         <div class="nav-label">System</div>
         <button type="button" class="nav-item" data-nav="network">Network</button>
+        <button type="button" class="nav-item" data-nav="advanced">Advanced</button>
         <button type="button" class="nav-item" data-nav="firmware">Maintenance</button>
       </div>
     </nav>
@@ -142,7 +143,7 @@
             <label class="check-row standalone">
               <input type="checkbox" name="swapPads" id="swapPads">
               <span class="check-box" aria-hidden="true"></span>
-              <span class="check-text"><strong>Swap pads</strong><span class="ct-hint">By default pad A (GPIO0) dims and pad B (GPIO1) brightens. Tick to reverse.</span></span>
+              <span class="check-text"><strong>Swap pads</strong><span class="ct-hint">By default pad A dims and pad B brightens. Tick to reverse. Pad pins are set on the Advanced page.</span></span>
             </label>
           </div>
 
@@ -283,6 +284,30 @@
             <p class="field-hint" style="margin:0 0 14px">Connected to <code id="wifiSsid">--</code>. Forget WiFi erases only the network credentials and restarts into the <code>LEDBar-XXXX</code> setup access point. Light settings are kept.</p>
             <div class="page-actions" style="margin-top:0">
               <button type="button" class="btn btn-danger" id="wifiResetBtn">Forget WiFi</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ADVANCED -->
+        <section class="page" data-page="advanced">
+          <div class="page-header">
+            <h1 class="page-h1">Advanced</h1>
+            <p class="page-lede">GPIO assignment. Change only if your wiring differs from the default.</p>
+          </div>
+          <div class="card">
+            <h2 class="card-title">GPIO setup</h2>
+            <div class="grid-2">
+              <div class="field" style="margin-bottom:0"><label class="field-label" for="pinPadA">Touch pad A</label><div class="select-wrap"><select name="pinPadA" id="pinPadA" class="pin-sel"></select></div></div>
+              <div class="field" style="margin-bottom:0"><label class="field-label" for="pinPadB">Touch pad B</label><div class="select-wrap"><select name="pinPadB" id="pinPadB" class="pin-sel"></select></div></div>
+              <div class="field" style="margin-bottom:0"><label class="field-label" for="pinPwm">LED PWM (MOSFET gate)</label><div class="select-wrap"><select name="pinPwm" id="pinPwm" class="pin-sel"></select></div></div>
+            </div>
+            <p class="field-hint">Defaults: pad A GPIO0, pad B GPIO1, LED PWM GPIO10. Greyed-out pins cannot be used; the reason is shown next to them. A factory reset restores the defaults.</p>
+            <div class="note warn">
+              <span class="note-k">restart</span>
+              <div>Saving a new pin assignment restarts the bar. Rewire the hardware to match, otherwise the pads or the LED strip will not respond. The web interface keeps working either way.</div>
+            </div>
+            <div class="page-actions">
+              <button type="button" class="btn" id="pinDefaults"><span class="gl"></span> Restore defaults</button>
             </div>
           </div>
         </section>

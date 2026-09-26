@@ -91,8 +91,35 @@ function markClean(txt) { if (saveMeta) { saveMeta.classList.add('clean'); $('.t
 form.addEventListener('input', markDirty);
 form.addEventListener('change', markDirty);
 
+var loadedPins = '';
+function pinKey() { return [$('#pinPadA').value, $('#pinPadB').value, $('#pinPwm').value].join(','); }
+function fillPinSelects(pins) {
+  $$('.pin-sel').forEach(function (sel) {
+    sel.innerHTML = pins.map(function (p) {
+      return '<option value="' + p.gpio + '"' + (p.usable ? '' : ' disabled') + '>GPIO' + p.gpio + (p.note ? ' \u00b7 ' + esc(p.note) : '') + '</option>';
+    }).join('');
+  });
+}
+// A pin already taken by another role is disabled in the other selects.
+function syncPinSelects() {
+  var sels = $$('.pin-sel');
+  sels.forEach(function (sel) {
+    Array.prototype.forEach.call(sel.options, function (o) {
+      if (o.dataset.base === undefined) o.dataset.base = o.disabled ? '1' : '0';
+      var taken = sels.some(function (other) { return other !== sel && other.value === o.value; });
+      o.disabled = o.dataset.base === '1' || taken;
+    });
+  });
+}
+$$('.pin-sel').forEach(function (sel) { sel.addEventListener('change', syncPinSelects); });
+$('#pinDefaults').addEventListener('click', function () {
+  $('#pinPadA').value = '0'; $('#pinPadB').value = '1'; $('#pinPwm').value = '10';
+  syncPinSelects(); markDirty();
+});
+
 function loadConfig() {
   return fetch('/api/config').then(function (r) { return r.json(); }).then(function (c) {
+    if (c.pins) fillPinSelects(c.pins);
     $$('[name]', form).forEach(function (el) {
       if (!(el.name in c)) return;
       if (el.type === 'checkbox') el.checked = !!c[el.name];
@@ -104,6 +131,8 @@ function loadConfig() {
     mp.value = '';
     mp.placeholder = c.mqttPassSet ? 'saved - leave empty to keep' : '';
     syncPanels();
+    syncPinSelects();
+    loadedPins = pinKey();
     markClean();
   });
 }
@@ -118,10 +147,12 @@ function formBody() {
 form.addEventListener('submit', function (e) {
   e.preventDefault();
   if (!form.reportValidity()) return;
+  if (pinKey() !== loadedPins && !confirm('The GPIO assignment changed. The bar will restart to apply it. Continue?')) return;
   var btn = $('#saveBtn'), orig = btn.textContent;
   btn.disabled = true; btn.textContent = 'Saving...';
   post('/save', formBody()).then(function (d) {
     btn.disabled = false; btn.textContent = orig;
+    if (d.success && d.restart) { markClean('Restarting...'); setTimeout(function () { location.reload(); }, 7000); return; }
     if (d.success) { markClean('Saved'); loadConfig(); refreshLight(); if ($('#mqttEnabled').checked) setTimeout(watchMqtt, 500); }
     else alert('Error saving settings: ' + (d.message || 'unknown error'));
   }).catch(function (err) { btn.disabled = false; btn.textContent = orig; alert('Error saving settings: ' + err); });

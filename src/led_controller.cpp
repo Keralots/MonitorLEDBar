@@ -2,16 +2,16 @@
 #include "config.h"
 #include "driver/gpio.h"
 
-void LedController::begin(bool on, uint16_t level) {
+void LedController::begin(uint8_t pwmPin, bool on, uint16_t level) {
   on_ = on;
   level_ = (level >= 1 && level <= LEVEL_MAX) ? level : DEFAULT_LEVEL;
   if (on_ && fixedOnLevel_) level_ = fixedOnLevel_;
   level_ = clampLevel(level_);
 
   ledcSetup(PWM_CHANNEL, PWM_FREQ_HZ, PWM_BITS);
-  ledcAttachPin(PIN_LED_PWM, PWM_CHANNEL);
+  ledcAttachPin(pwmPin, PWM_CHANNEL);
   // Max pad drive current for faster MOSFET gate edges; set after attach.
-  gpio_set_drive_capability((gpio_num_t)PIN_LED_PWM, GPIO_DRIVE_CAP_3);
+  gpio_set_drive_capability((gpio_num_t)pwmPin, GPIO_DRIVE_CAP_3);
   writeOutput(0);
   lastUpdate_ = millis();
 }

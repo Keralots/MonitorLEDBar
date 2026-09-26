@@ -9,6 +9,7 @@
 #include "mqtt_ha.h"
 #include "network.h"
 #include "pairing.h"
+#include "pins.h"
 #include "settings.h"
 #include "web_pages.h"
 
@@ -65,6 +66,10 @@ static void handleConfig() {
   doc["mqttPort"] = settings.mqttPort;
   doc["mqttUser"] = settings.mqttUser;
   doc["mqttPassSet"] = settings.mqttPass[0] != 0;  // the password itself never leaves the device
+  doc["pinPadA"] = settings.pinPadA;
+  doc["pinPadB"] = settings.pinPadB;
+  doc["pinPwm"] = settings.pinPwm;
+  pinsFillJson(doc["pins"].to<JsonArray>());
   sendJson(doc);
 }
 
@@ -108,10 +113,15 @@ static void handleSave() {
     strlcpy(s.mqttPass, server.arg("mqttPass").c_str(), sizeof(s.mqttPass));
   }
   if (s.mqttUser[0] == 0) s.mqttPass[0] = 0;
+  if (server.hasArg("pinPadA")) s.pinPadA = argByte("pinPadA");
+  if (server.hasArg("pinPadB")) s.pinPadB = argByte("pinPadB");
+  if (server.hasArg("pinPwm")) s.pinPwm = argByte("pinPwm");
+  if (!pinsValid(s.pinPadA, s.pinPadB, s.pinPwm)) return sendError("Invalid GPIO selection: pins must be usable and all different");
   if (s.mqttEnabled && s.mqttHost[0] == 0) return sendError("MQTT host is required");
   settingsClamp(s);
 
   bool nameChanged = strcmp(s.deviceName, settings.deviceName) != 0;
+  bool pinsChanged = s.pinPadA != settings.pinPadA || s.pinPadB != settings.pinPadB || s.pinPwm != settings.pinPwm;
   bool mqttChanged = nameChanged || s.mqttEnabled != settings.mqttEnabled || s.mqttPort != settings.mqttPort ||
                      strcmp(s.mqttHost, settings.mqttHost) || strcmp(s.mqttUser, settings.mqttUser) ||
                      strcmp(s.mqttPass, settings.mqttPass);
@@ -119,6 +129,15 @@ static void handleSave() {
   settingsSave();
   applySettings();
   if (mqttChanged) mqttConfigChanged();
+  if (pinsChanged) {
+    // Pins are claimed once at boot, so apply a new assignment with a clean restart.
+    JsonDocument doc;
+    doc["success"] = true;
+    doc["restart"] = true;
+    sendJson(doc);
+    delay(500);
+    ESP.restart();
+  }
   if (nameChanged) {
     WiFi.setHostname(settings.deviceName);
     networkRestartMdns();

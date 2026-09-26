@@ -17,8 +17,8 @@ struct Pad {
 };
 
 static Pad pads[] = {
-  {TouchButton(PIN_TOUCH_A), true, Role::Down},
-  {TouchButton(PIN_TOUCH_B), false, Role::Up},
+  {TouchButton(), true, Role::Down},
+  {TouchButton(), false, Role::Up},
 };
 
 LedController led;
@@ -73,16 +73,18 @@ void setup() {
   uint16_t level;
   stateLoad(on, level);
 
-  for (auto &p : pads) p.button.begin();
+  pads[0].button.begin(settings.pinPadA);
+  pads[1].button.begin(settings.pinPadB);
 
   applySettings();
-  led.begin(on, level);
+  led.begin(settings.pinPwm, on, level);
   led.setChangeListener([] {
     savePending = true;
     changedAt = millis();
   });
 
-  Serial.printf("MonitorLEDBar v%s start: on=%d level=%u name=%s\n", FW_VERSION, on, level, settings.deviceName);
+  Serial.printf("MonitorLEDBar v%s start: on=%d level=%u name=%s pins A=%u B=%u PWM=%u\n", FW_VERSION, on, level,
+                settings.deviceName, settings.pinPadA, settings.pinPadB, settings.pinPwm);
   networkBegin();
   pairBegin();
   mqttBegin();

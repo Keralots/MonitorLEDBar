@@ -1,6 +1,7 @@
 #include "settings.h"
 #include <Preferences.h>
 #include "config.h"
+#include "pins.h"
 
 Settings settings;
 
@@ -26,6 +27,13 @@ void settingsDefaults(Settings &s) {
   s.mqttPort = DEF_MQTT_PORT;
   s.mqttUser[0] = '\0';
   s.mqttPass[0] = '\0';
+  s.pinPadA = DEF_PIN_PAD_A;
+  s.pinPadB = DEF_PIN_PAD_B;
+  s.pinPwm = DEF_PIN_PWM;
+}
+
+bool pinsValid(uint8_t padA, uint8_t padB, uint8_t pwm) {
+  return pinUsable(padA) && pinUsable(padB) && pinUsable(pwm) && padA != padB && padA != pwm && padB != pwm;
 }
 
 bool isValidHostname(const char *name) {
@@ -48,6 +56,11 @@ void settingsClamp(Settings &s) {
   if ((uint8_t)s.onLevelMode > 1) s.onLevelMode = OnLevelMode::Last;
   if (s.mqttPort == 0) s.mqttPort = DEF_MQTT_PORT;
   if (s.mqttHost[0] == '\0') s.mqttEnabled = false;
+  if (!pinsValid(s.pinPadA, s.pinPadB, s.pinPwm)) {
+    s.pinPadA = DEF_PIN_PAD_A;
+    s.pinPadB = DEF_PIN_PAD_B;
+    s.pinPwm = DEF_PIN_PWM;
+  }
   if (!isValidHostname(s.deviceName)) {
     Settings d;
     settingsDefaults(d);
@@ -73,6 +86,9 @@ void settingsLoad() {
   settings.mqttPort = prefs.getUShort("mqttPort", settings.mqttPort);
   prefs.getString("mqttUser", settings.mqttUser, sizeof(settings.mqttUser));
   prefs.getString("mqttPass", settings.mqttPass, sizeof(settings.mqttPass));
+  settings.pinPadA = prefs.getUChar("pinA", settings.pinPadA);
+  settings.pinPadB = prefs.getUChar("pinB", settings.pinPadB);
+  settings.pinPwm = prefs.getUChar("pinPwm", settings.pinPwm);
   prefs.end();
   settingsClamp(settings);
 }
@@ -93,6 +109,9 @@ void settingsSave() {
   prefs.putUShort("mqttPort", settings.mqttPort);
   prefs.putString("mqttUser", settings.mqttUser);
   prefs.putString("mqttPass", settings.mqttPass);
+  prefs.putUChar("pinA", settings.pinPadA);
+  prefs.putUChar("pinB", settings.pinPadB);
+  prefs.putUChar("pinPwm", settings.pinPwm);
   prefs.end();
 }
 

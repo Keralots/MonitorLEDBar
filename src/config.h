@@ -1,12 +1,12 @@
 #pragma once
 #include <Arduino.h>
 
-#define FW_VERSION "0.4.1"
+#define FW_VERSION "0.5.0"
 
-// ESP32-C3 SuperMini pins. Strapping pins 2, 8, 9 avoided.
-constexpr uint8_t PIN_TOUCH_A = 0;   // default role: dim / off
-constexpr uint8_t PIN_TOUCH_B = 1;   // default role: brighten / on
-constexpr uint8_t PIN_LED_PWM = 10;  // IRLZ44N gate via 100R
+// Default ESP32-C3 SuperMini pins; changeable on the web Advanced page (see pins.cpp).
+constexpr uint8_t DEF_PIN_PAD_A = 0;   // default role: dim / off
+constexpr uint8_t DEF_PIN_PAD_B = 1;   // default role: brighten / on
+constexpr uint8_t DEF_PIN_PWM = 10;    // IRLZ44N gate via 100R
 
 // 5 kHz keeps switching loss low with the slow 3.3 V gate drive.
 constexpr uint32_t PWM_FREQ_HZ = 5000;

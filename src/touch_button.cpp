@@ -1,7 +1,8 @@
 #include "touch_button.h"
 #include "config.h"
 
-void TouchButton::begin() {
+void TouchButton::begin(uint8_t pin) {
+  pin_ = pin;
   pinMode(pin_, INPUT_PULLDOWN);
 }
 

@@ -19,6 +19,9 @@ struct Settings {
   uint16_t mqttPort;
   char mqttUser[64];
   char mqttPass[64];
+  uint8_t pinPadA;
+  uint8_t pinPadB;
+  uint8_t pinPwm;
 };
 
 extern Settings settings;
@@ -28,6 +31,7 @@ void settingsSave();
 void settingsClamp(Settings &s);
 void settingsDefaults(Settings &s);
 bool isValidHostname(const char *name);
+bool pinsValid(uint8_t padA, uint8_t padB, uint8_t pwm);
 
 // Light state is stored separately; it changes far more often than settings.
 void stateLoad(bool &on, uint16_t &level);
