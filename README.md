@@ -60,4 +60,6 @@ All bars must be on the same WiFi network. Open the **Pairing** page on one bar 
 
 ## 3D printed enclosure
 
-Print files and photos are coming soon on MakerWorld.
+**Print files:** download links coming soon (MakerWorld).
+
+Step-by-step build with CAD renders and photos: [docs/ASSEMBLY.md](docs/ASSEMBLY.md).
