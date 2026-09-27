@@ -239,6 +239,10 @@ until the rear pads touch the back of the monitor, tighten. All from the top.
 
 ![Lit, closer](assembly/photos/13_4.jpg)
 
+The effect on the desk, bar on (left) and off (right):
+
+![Desk with the bar on vs off](assembly/photos/led_on_vs_off.jpg)
+
 Video of the finished bar in use: [YouTube](https://youtube.com/shorts/RAWoSDGTpJ0)
 
 Then continue with [First setup](../README.md#first-setup) in the README.
