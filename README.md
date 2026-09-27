@@ -2,6 +2,8 @@
 
 A touch-controlled LED light bar that sits on top of a PC monitor. Built around an ESP32-C3 SuperMini, two TTP223 touch pads and a 12 V single-color LED strip, powered from a single USB-C PD charger.
 
+![MonitorLEDBar on a monitor](docs/assembly/photos/13_4.jpg)
+
 ## Features
 
 - **Touch control** - tap to turn on/off, touch and hold to dim or brighten with a smooth, perceptually even ramp
@@ -13,6 +15,12 @@ A touch-controlled LED light bar that sits on top of a PC monitor. Built around 
 - **Multi-monitor pairing** - pair several bars over ESP-NOW so the pads on any bar control all of them
 - **Easy setup and updates** - WiFi setup portal on first boot, firmware updates over the air from the web page
 - **mDNS** - reachable at `http://<device-name>.local`
+
+## 3D printed enclosure
+
+**Print files:** [MakerWorld](https://makerworld.com/models/3362536).
+
+Step-by-step build with CAD renders and photos: [docs/ASSEMBLY.md](docs/ASSEMBLY.md).
 
 ## Hardware
 
@@ -57,9 +65,3 @@ Requires an MQTT broker (for example the Mosquitto broker add-on) and the MQTT i
 ## Pairing multiple bars
 
 All bars must be on the same WiFi network. Open the **Pairing** page on one bar and click **Pair** next to another bar in the "Bars nearby" list. Paired bars share one state: pads, the web interface or Home Assistant on any of them control the whole group.
-
-## 3D printed enclosure
-
-**Print files:** download links coming soon (MakerWorld).
-
-Step-by-step build with CAD renders and photos: [docs/ASSEMBLY.md](docs/ASSEMBLY.md).

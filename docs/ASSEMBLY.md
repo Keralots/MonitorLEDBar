@@ -5,7 +5,7 @@ first and then photos of a real build. The renders show bought parts (screws,
 nuts, AA cells, TTP223 boards, LED strip, cables) as simple stand-ins, and most
 of them use the short 60 mm test arms so the details stay visible.
 
-**Print files:** download links coming soon (MakerWorld).
+**Print files:** [MakerWorld](https://makerworld.com/models/3362536).
 
 Screw variant of the housing (`02_ShallowHousing_sruby`): every M3 screw cuts
 its own thread in the plastic, no heat-set inserts. Drive each screw by hand
