@@ -4,6 +4,8 @@ A touch-controlled LED light bar that sits on top of a PC monitor. Built around 
 
 ![MonitorLEDBar on a monitor](docs/assembly/photos/13_4.jpg)
 
+Video of the bar in use: [YouTube](https://youtube.com/shorts/RAWoSDGTpJ0)
+
 ## Features
 
 - **Touch control** - tap to turn on/off, touch and hold to dim or brighten with a smooth, perceptually even ramp
@@ -15,6 +17,10 @@ A touch-controlled LED light bar that sits on top of a PC monitor. Built around 
 - **Multi-monitor pairing** - pair several bars over ESP-NOW so the pads on any bar control all of them
 - **Easy setup and updates** - WiFi setup portal on first boot, firmware updates over the air from the web page
 - **mDNS** - reachable at `http://<device-name>.local`
+
+| Light | Pairing |
+|---|---|
+| ![Light page of the web interface](docs/screenshots/web_light.png) | ![Pairing page of the web interface](docs/screenshots/web_pairing.png) |
 
 ## 3D printed enclosure
 

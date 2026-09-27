@@ -239,4 +239,6 @@ until the rear pads touch the back of the monitor, tighten. All from the top.
 
 ![Lit, closer](assembly/photos/13_4.jpg)
 
+Video of the finished bar in use: [YouTube](https://youtube.com/shorts/RAWoSDGTpJ0)
+
 Then continue with [First setup](../README.md#first-setup) in the README.
